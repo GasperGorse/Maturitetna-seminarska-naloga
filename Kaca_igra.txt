@@ -1,0 +1,8 @@
+
+public class Kaca_igra {
+
+	public static void main(String[] args) {
+	
+		new Igralno_polje();
+	}
+}

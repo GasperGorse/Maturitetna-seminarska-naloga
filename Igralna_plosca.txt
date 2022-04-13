@@ -1,0 +1,191 @@
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.util.Random;
+import javax.swing.JPanel;
+
+public class Igralna_plosca extends JPanel implements ActionListener{
+	
+	static final int SIRINA_ZASLONA = 600;
+	static final int VISINA_ZASLONA = 600;
+	static final int VELIKOST_ELEMENTOV = 25;
+	static final int STEVILO_ELEMENTOV = (SIRINA_ZASLONA*VISINA_ZASLONA)/VELIKOST_ELEMENTOV;
+	static final int HITROST = 85;
+	final int x[] = new int[STEVILO_ELEMENTOV]; //x koordinate
+	final int y[] = new int[STEVILO_ELEMENTOV]; //y koordinate
+	int deliTelesa = 6; //koliko je kaca dolga, zacetna dolzina
+	int pojedenaJabolka;
+	int xJabolko; //x koordinata jabolka
+	int yJabolko; //y koordinata jabolka
+	char smer = 'R'; //zacetna smer, R-desno, L-levo, U-gor, D-dol
+	boolean izvajanje = false; //ali je igra v teku ali ne
+	Timer timer;
+	Random random;
+	
+	Igralna_plosca(){
+		random = new Random();
+		this.setPreferredSize(new Dimension(SIRINA_ZASLONA,VISINA_ZASLONA));
+		this.setBackground(Color.black);
+		this.setFocusable(true);
+		this.addKeyListener(new MyKeyAdapter());
+		Pricetek_igre();
+	}
+	public void Pricetek_igre(){
+		NovoJabolko();
+		izvajanje = true;
+		timer = new Timer(HITROST,this);
+		timer.start();
+	}
+	public void BarvniElementi(Graphics g){
+		super.paintComponent(g);
+		Risanje(g);
+	}
+	public void Risanje(Graphics g){ 
+		if(izvajanje) {
+			/* samo za lazje ustvarjanje, ni pomembno za samo delovanje igre
+			for(int i=0; i<VISINA_ZASLONA/VELIKOST_ELEMENTOV; i++) {
+				g.drawLine(i*VELIKOST_ELEMENTOV, 0, i*VELIKOST_ELEMENTOV, VISINA_ZASLONA);
+				g.drawLine(0, i*VELIKOST_ELEMENTOV, i*SIRINA_ZASLONA, i*VELIKOST_ELEMENTOV);
+			}
+			*/
+			g.setColor(Color.red);
+			g.fillOval(xJabolko, yJabolko, VELIKOST_ELEMENTOV, VELIKOST_ELEMENTOV);
+		
+			for(int i=0; i<deliTelesa; i++) {
+				if(i==0) {
+					g.setColor(Color.green);
+					g.fillRect(x[i], y[i], VELIKOST_ELEMENTOV, VELIKOST_ELEMENTOV);
+				}
+				else {
+					g.setColor(new Color(45, 180, 0));
+					//g.setColor(new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255))); //spreminjanje barve
+					g.fillRect(x[i], y[i], VELIKOST_ELEMENTOV, VELIKOST_ELEMENTOV);
+				}
+			}
+			g.setColor(Color.blue);
+			g.setFont(new Font("SansSerif", Font.BOLD, 40));
+			FontMetrics metrics = getFontMetrics(g.getFont());
+			g.drawString("TOČKE: " + pojedenaJabolka, (SIRINA_ZASLONA - metrics.stringWidth("TOČKE: " + pojedenaJabolka)) / 2, g.getFont().getSize());
+		}
+		else {
+			Konec_igre(g);
+		}
+	}
+	public void NovoJabolko(){
+		xJabolko = random.nextInt((int)(SIRINA_ZASLONA/VELIKOST_ELEMENTOV))*VELIKOST_ELEMENTOV;
+		yJabolko = random.nextInt((int)(VISINA_ZASLONA/VELIKOST_ELEMENTOV))*VELIKOST_ELEMENTOV;
+		
+	}
+	public void Premikanje(){
+		for(int i = deliTelesa; i>0; i--) {
+			x[i] = x[i-1];
+			y[i] = y[i-1];
+		}
+		switch(smer) {
+		case 'U':
+			y[0] = y[0] - VELIKOST_ELEMENTOV;
+			break;
+		case 'D':
+			y[0] = y[0] + VELIKOST_ELEMENTOV;
+			break;
+		case 'L':
+			x[0] = x[0] - VELIKOST_ELEMENTOV;
+			break;
+		case 'R':
+			x[0] = x[0] + VELIKOST_ELEMENTOV;
+			break;
+		}
+		
+	}
+	public void Preveri_za_jabolko(){
+		if((x[0] == xJabolko) && (y[0] == yJabolko)) {
+			deliTelesa++;
+			pojedenaJabolka++;
+			NovoJabolko();
+		}
+	}
+	public void Preveri_za_trke(){
+		
+		//preverimo ce se glava trci z telesom
+		for(int i=deliTelesa; i>0; i--) {
+			if( (x[0] == x[i] && y[0] == y[i]) ) {
+				izvajanje = false;
+			}
+		}
+		//L meja - trk
+		if(x[0] < 0) {
+			izvajanje = false;
+		}
+		//D meja - trk
+		if(x[0] > SIRINA_ZASLONA) {
+			izvajanje = false;
+		}
+		//U meja - trk
+		if(y[0] < 0) {
+			izvajanje = false;
+		}
+		//D meja - trk
+		if(y[0] > VISINA_ZASLONA) {
+			izvajanje = false;
+		}
+		
+		if(!izvajanje) {
+			timer.stop();
+		}
+		
+	}
+	public void Konec_igre(Graphics g){
+		//Izpis dosezenih tock
+		g.setColor(Color.blue);
+		g.setFont(new Font("SansSerif", Font.BOLD, 40));
+		FontMetrics metrics1 = getFontMetrics(g.getFont());
+		g.drawString("TOČKE: " + pojedenaJabolka, (SIRINA_ZASLONA - metrics1.stringWidth("TOČKE: " + pojedenaJabolka)) / 2, g.getFont().getSize());
+		//Izpis KONEC IGRE
+		g.setColor(Color.blue);
+		g.setFont(new Font("SansSerif", Font.BOLD, 75));
+		FontMetrics metrics2 = getFontMetrics(g.getFont());
+		g.drawString("KONEC IGRE", (SIRINA_ZASLONA - metrics2.stringWidth("KONEC IGRE")) / 2, VISINA_ZASLONA / 2);
+	}
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (izvajanje) {
+			Premikanje();
+			Preveri_za_jabolko();
+			Preveri_za_trke();
+		}
+		repaint();
+	}
+
+	@Override
+	public void paint(Graphics g) {
+		BarvniElementi(g);
+	}
+	
+	public class MyKeyAdapter extends KeyAdapter{
+		@Override
+		public void keyPressed(KeyEvent e){
+			switch(e.getKeyCode()) {
+			case KeyEvent.VK_LEFT:
+				if (smer != 'R') {
+					smer = 'L';
+				}
+				break;
+			case KeyEvent.VK_RIGHT:
+				if (smer != 'L') {
+					smer = 'R';
+				}
+				break;
+			case KeyEvent.VK_UP:
+				if (smer != 'D') {
+					smer = 'U';
+				}
+				break;
+			case KeyEvent.VK_DOWN:
+				if (smer != 'U') {
+					smer = 'D';
+				}
+				break;
+			}
+		}
+	}
+}
